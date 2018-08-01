@@ -185,7 +185,7 @@ void draw()
     //Make image audio reactive    
     //println(previousBandValue);
     //myImg.resize(0,200);
-    for(int i = 0; i < fft.specSize()*specLow; i++)
+    for(int j = 0; j < fft.specSize()*specLow; j++)
     {
       image(myImg,width/2-130,height/2-100);
     }
