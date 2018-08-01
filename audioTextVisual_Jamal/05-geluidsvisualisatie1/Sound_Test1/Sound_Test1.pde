@@ -8,7 +8,10 @@ AudioPlayer player;
 Minim mySound; //CREATE A NEW SOUND OBJECT
 AudioInput in;
 RFont font;
-String myText = "GELUID";
+
+//String myText = "GELUID";
+String[] myText = {"Apple", "Banana", "Orange", "Grapes"};
+
 float rWidth, rHeight;
 int hVal;
 
@@ -52,7 +55,7 @@ void draw() {
   //RCommand.setSegmentLength(fft.getAvg(1)*2000);
   RCommand.setSegmentator(RCommand.UNIFORMLENGTH);
 
-  RGroup myGoup = font.toGroup(myText); 
+  RGroup myGoup = font.toGroup(myText[0]); 
   RPoint[] myPoints = myGoup.getPoints();
 
   beginShape(TRIANGLE_STRIP);
@@ -84,12 +87,12 @@ void keyReleased() {
   else loop();
 }
 
-void keyPressed() {
-  if (key == '1')
-    myText = "GELUID";
-  if (key == '2')
-    myText = "SOUND";
-  if (key == '3')
-    myText = "MOTION";
-}
+//void keyPressed() {
+//  if (key == '1')
+//    myText = "GELUID";
+//  if (key == '2')
+//    myText = "SOUND";
+//  if (key == '3')
+//    myText = "MOTION";
+//}
 //////////////////////////////////////////////
