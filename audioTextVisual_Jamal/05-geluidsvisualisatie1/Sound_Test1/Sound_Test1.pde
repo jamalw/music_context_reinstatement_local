@@ -4,19 +4,25 @@ import ddf.minim.analysis.*;
 import processing.video.*;
 PImage fade;
 FFT fft;
-AudioPlayer player;
+//AudioPlayer player;
+AudioPlayer[] player = new AudioPlayer[2];
 Minim mySound; //CREATE A NEW SOUND OBJECT
 AudioInput in;
 RFont font;
+int song_idx;
 
-//String myText = "GELUID";
-String[] myText = {"Apple", "Banana", "Orange", "Grapes"};
+//String[] myText = {"Music", "Sound", "Motion", "Grapes", "Process", "Test", "Block", "Color", "Octopus", "Matrix", "Farmer", "Astro"};
+String[] myText = {"Music", "Sound", "Motion", "Grapes", "Process", "Test"};
 
 float rWidth, rHeight;
 int hVal;
+int time = millis();
+int counter = 0;
+int frameCounter = 0;
+String text;
+int rate = 30;
 
   //COULD USE A NOISE FUNCTION HERE FOR WIGGLE.
-//float wiggle = 3.7;
 boolean stopAnime = false;
 
 //----------------SETUP---------------------------------
@@ -32,10 +38,13 @@ void setup() {
   rWidth = width * 0.99;
   rHeight = height * 0.99;
   hVal = 0;
-  player = mySound.loadFile("Kamasi Washington - Change of the Guard-2 3.mp3",2048);
-  player.play();
-  fft = new FFT(player.bufferSize(),player.sampleRate());
-  fft.logAverages(60,7);
+  //player[0] = mySound.loadFile("u.wav");
+  player[0] = mySound.loadFile("Kamasi Washington - Change of the Guard-2 3.mp3",2048);
+  player[1] = mySound.loadFile("Stelvio Cipriani - Mary's Theme [1969].wav",2048);
+  player[0].play();
+  //fft = new FFT(player.bufferSize(),player.sampleRate());
+  //fft.logAverages(60,7);
+  frameRate(rate);
 }
 
 //----------------DRAW---------------------------------
@@ -47,17 +56,27 @@ void draw() {
   colorMode(RGB);
   noFill();
   translate(width/2, height/1.5);
-  float soundLevel = player.mix.level(); //GET OUR AUDIO IN LEVEL
+  float soundLevel = player[0].mix.level(); //GET OUR AUDIO IN LEVEL
  
-  fft.forward(player.mix);
+  //fft.forward(player.mix);
   
   RCommand.setSegmentLength(soundLevel*270);
   //RCommand.setSegmentLength(fft.getAvg(1)*2000);
   RCommand.setSegmentator(RCommand.UNIFORMLENGTH);
-
-  RGroup myGoup = font.toGroup(myText[0]); 
+  
+  text = myText[counter];
+  RGroup myGoup = font.toGroup(text);
+  frameCounter = frameCounter + (frameCount/frameCount);
+  
+  if (frameCounter == rate*6)
+  {    
+    counter = counter + 1;
+    frameCounter = 0;
+  }  
+  
+  if
+  
   RPoint[] myPoints = myGoup.getPoints();
-
   beginShape(TRIANGLE_STRIP);
   
   
@@ -74,6 +93,8 @@ void draw() {
     hVal = 0;
   }
     
+  
+    
  
   endShape();
 }
@@ -87,12 +108,4 @@ void keyReleased() {
   else loop();
 }
 
-//void keyPressed() {
-//  if (key == '1')
-//    myText = "GELUID";
-//  if (key == '2')
-//    myText = "SOUND";
-//  if (key == '3')
-//    myText = "MOTION";
-//}
 //////////////////////////////////////////////
