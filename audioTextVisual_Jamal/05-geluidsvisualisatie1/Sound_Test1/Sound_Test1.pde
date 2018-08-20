@@ -13,7 +13,8 @@ AudioPlayer[] player = new AudioPlayer[2];
 Minim mySound; //CREATE A NEW SOUND OBJECT
 AudioInput in;
 RFont font;
-Table table;
+Table word_table;
+Table song_table;
 
 String[] subj_id = {"test_subj"};
 String[] datadir = {"/Users/jamalw/Desktop/PNI/music_context_reinstatement/"};
@@ -36,15 +37,14 @@ int rate = 30;
 int song_idx = 0;
 
 
-
 //COULD USE A NOISE FUNCTION HERE FOR WIGGLE.
 boolean stopAnime = false;
 
 //----------------SETUP---------------------------------
 void setup() {
   //Setup new subject if it has not been done already
-  makeDir(datadir[0], subj_id[0]);
-  create_lists();
+  create_word_lists(datadir[0], subj_id[0]);
+  create_song_list(datadir[0], subj_id[0]);
   
   size(900, 400);
   background(255);
@@ -124,14 +124,12 @@ void draw() {
 
 //--------------Prepare subject's directory, word lists, and songs------------------
 
-void makeDir (String datadir, String subj_id) {
-  File f = new File(datadir + subj_id);
-  f.mkdir();
-}
 
-void create_lists () {
-  String[] lines = loadStrings("/Users/jamalw/Desktop/PNI/music_context_reinstatement/stimuli/longpool_audio.csv");
-  table = new Table();
+void create_word_lists (String datadir, String subj_id) {
+  File f = new File(datadir + "data/" + subj_id + "/stimuli/word_lists/");
+  f.mkdir();
+  String[] lines = loadStrings(datadir + "stimuli/longpool_audio.csv");
+  word_table = new Table();
   // create array of values ranging from 1 length of "lines"  
   Integer[] arr = new Integer[lines.length];
   for (int i = 0; i < arr.length; i++) {
@@ -151,13 +149,13 @@ void create_lists () {
   // save every 12 words to its own csv file until we've looped through all of the words
   for(int i=0;i < newlines.length; i++)
   {
-    TableRow newRow = table.addRow();
+    TableRow newRow = word_table.addRow();
     newRow.setString(0,newlines[i]);
-    if (table.getRowCount() % 12 == 0)
+    if (word_table.getRowCount() % 12 == 0)
     { 
-      String[] listdir = {"/Users/jamalw/Desktop/PNI/music_context_reinstatement/test_subj/" + str(run) + "_" + str(list_num) + ".csv"};
-      saveTable(table, listdir[0]);
-      table = new Table();
+      String[] listdir = {datadir + "data/" + subj_id + "/stimuli/word_lists/" + str(run) + "_" + str(list_num) + ".csv"};
+      saveTable(word_table, listdir[0]);
+      word_table = new Table();
      
       if (list_num == 0){
         list_num = 1;
@@ -171,7 +169,23 @@ void create_lists () {
     
   }
 }
- 
+
+void create_song_list (String datadir, String subj_id) {
+  song_table = new Table();
+  File f = new File(datadir + "stimuli/songs/");
+  ArrayList<String> names = new ArrayList<String>(Arrays.asList(f.list()));
+  names.remove(".DS_Store");
+  Collections.shuffle(names);
+  
+  for(int i=0;i < names.size(); i++)
+  {
+    TableRow newRow = song_table.addRow();
+    newRow.setString(0,names.get(i));
+  }
+
+saveTable(song_table, datadir + "data/" + subj_id + "/stimuli/songs/song_list.csv");
+  
+}
 
 
 //----------------KEYS---------------------------------
