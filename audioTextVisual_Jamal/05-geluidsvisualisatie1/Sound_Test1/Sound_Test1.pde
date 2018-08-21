@@ -18,6 +18,7 @@ Table song_table;
 
 String[] subj_id = {"test_subj"};
 String[] datadir = {"/Users/jamalw/Desktop/PNI/music_context_reinstatement/"};
+boolean displayinstructioncommand = true;
 
 //Prepare variables for subject word lists creation
 int run = 1;
@@ -35,6 +36,9 @@ int frameCounter = 0;
 String text;
 int rate = 30;
 int song_idx = 0;
+String[] instructions_join; 
+String[] instructions;
+int index = 0;
 
 
 //COULD USE A NOISE FUNCTION HERE FOR WIGGLE.
@@ -45,7 +49,11 @@ void setup() {
   //Setup new subject if it has not been done already
   create_word_lists(datadir[0], subj_id[0]);
   create_song_list(datadir[0], subj_id[0]);
+  String[] instructions_split = loadStrings("FR_INSTRUCTIONS.txt");
+  String instructions_join = join(instructions_split,"\n");
+  instructions = split(instructions_join,"\n");
   
+  //println(instructions);
   size(900, 400);
   background(255);
   smooth();
@@ -59,67 +67,77 @@ void setup() {
   hVal = 0;
   player[0] = mySound.loadFile("Kamasi Washington - Change of the Guard-2 3.mp3",2048);
   player[1] = mySound.loadFile("11 Davibe.mp3",2048);
-  player[0].play();
+  //player[0].play();
   //fft = new FFT(player.bufferSize(),player.sampleRate());
   //fft.logAverages(60,7);
   frameRate(rate);
+  
   
 }
 
 //----------------DRAW---------------------------------
 void draw() {
   background(255);
-  image(fade, (width - rWidth) / 2, (height - rHeight) / 2, rWidth, rHeight);
   colorMode(HSB);
   stroke(hVal, 200, 200);
   colorMode(RGB);
   noFill();
   translate(width/2, height/1.5);
-  float soundLevel = player[song_idx].mix.level(); //GET OUR AUDIO IN LEVEL
- 
-  //fft.forward(player.mix);
   
-  RCommand.setSegmentLength(soundLevel*120);
-  //RCommand.setSegmentLength(fft.getAvg(1)*2000);
-  RCommand.setSegmentator(RCommand.UNIFORMLENGTH);
-  
-  text = myText[counter];
-  RGroup myGoup = font.toGroup(text);
-  frameCounter = frameCounter + (frameCount/frameCount);
-  
-  if (frameCounter == rate*3)
-  {    
-    counter = counter + 1;
-    frameCounter = 0;
-  }  
-  
-  if (counter > (myText.length * 1/2)-1)
-  {
-    player[0].pause();
-    //player[song_idx = (song_idx + 1) % player.length].play();
-    song_idx = 1;
-    player[song_idx].play();
+  if (displayinstructioncommand) {
+    for (int i = 0; i < instructions.length; i++){
+      fill(0);
+      textAlign(CENTER,CENTER);
+      text(instructions[i],-50,-250+i*20);
+    }    
   }
-  
-  
-  RPoint[] myPoints = myGoup.getPoints();
-  beginShape(TRIANGLE_STRIP);
-  
-  
-  for (int i=0; i<myPoints.length; i++)
-  //for(int i=0; i<fft.avgSize();i++)
-  {
-    vertex(myPoints[i].x, myPoints[i].y);
-  }
-  //fade = get(0, 0, width, height);    
-  
-  hVal += 2;
-  if ( hVal > 255)
-  {
-    hVal = 0;
-  }
+  else {
+    float soundLevel = player[song_idx].mix.level(); //GET OUR AUDIO IN LEVEL
     
-  endShape();
+    //fft.forward(player.mix);
+    
+    RCommand.setSegmentLength(soundLevel*120);
+    //RCommand.setSegmentLength(fft.getAvg(1)*2000);
+    RCommand.setSegmentator(RCommand.UNIFORMLENGTH);
+    
+    text = myText[counter];
+    RGroup myGoup = font.toGroup(text);
+    frameCounter = frameCounter + (frameCount/frameCount);
+    
+    if (frameCounter == rate*3)
+    {    
+      counter = counter + 1;
+      frameCounter = 0;
+    }  
+    
+    if (counter > (myText.length * 1/2)-1)
+    {
+      player[0].pause();
+      //player[song_idx = (song_idx + 1) % player.length].play();
+      song_idx = 1;
+      player[song_idx].play();
+    }
+    
+    
+    RPoint[] myPoints = myGoup.getPoints();
+    beginShape(TRIANGLE_STRIP);
+    
+    
+    for (int i=0; i<myPoints.length; i++)
+    //for(int i=0; i<fft.avgSize();i++)
+    {
+      vertex(myPoints[i].x, myPoints[i].y);
+    }
+    //fade = get(0, 0, width, height);    
+    
+    hVal += 2;
+    if ( hVal > 255)
+    {
+      hVal = 0;
+    }
+      
+    endShape();
+  }
 }
 
 //--------------Prepare subject's directory, word lists, and songs------------------
@@ -190,11 +208,17 @@ saveTable(song_table, datadir + "data/" + subj_id + "/stimuli/songs/song_list.cs
 
 //----------------KEYS---------------------------------
 void keyReleased() {
-  if (key == 'f') 
-    stopAnime = !stopAnime;
-  if (stopAnime == true) 
-    noLoop(); 
-  else loop();
+  if (displayinstructioncommand) {
+    displayinstructioncommand=false;
+    player[0].play();
+    }
+    else {
+    if (key == 'f') 
+      stopAnime = !stopAnime;
+    if (stopAnime == true) 
+      noLoop(); 
+    else loop();
+    }
 }
 
 //////////////////////////////////////////////
