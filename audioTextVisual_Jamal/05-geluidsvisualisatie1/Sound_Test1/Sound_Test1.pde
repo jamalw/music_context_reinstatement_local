@@ -15,6 +15,7 @@ AudioInput in;
 RFont font;
 Table word_table;
 Table song_table;
+int[] conditions = {0,1,2,3,0,1,2,3,0,1,2,3};
 
 String[] subj_id = {"test_subj"};
 String[] datadir = {"/Users/jamalw/Desktop/PNI/music_context_reinstatement/"};
@@ -24,10 +25,7 @@ boolean displayinstructioncommand = true;
 int run = 1;
 int list_num = 0;
 
-
 String[] myText = {"Music", "Sound", "Motion", "Grapes", "Process", "Test", "Block", "Color", "Octopus", "Matrix", "Farmer", "Astro"};
-
-//String[] myText = {"Music", "Sound", "Motion", "Grapes"};
 
 float rWidth, rHeight;
 int hVal;
@@ -36,10 +34,9 @@ int frameCounter = 0;
 String text;
 int rate = 30;
 int song_idx = 0;
-String[] instructions_join; 
 String[] instructions;
 int index = 0;
-
+String[] words;
 
 //COULD USE A NOISE FUNCTION HERE FOR WIGGLE.
 boolean stopAnime = false;
@@ -50,10 +47,9 @@ void setup() {
   create_word_lists(datadir[0], subj_id[0]);
   create_song_list(datadir[0], subj_id[0]);
   String[] instructions_split = loadStrings("FR_INSTRUCTIONS.txt");
-  String instructions_join = join(instructions_split,"\n");
+  String instructions_join = join(instructions_split,"\n");  
   instructions = split(instructions_join,"\n");
-  
-  //println(instructions);
+  words = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/word_lists/1_0.csv");  
   size(900, 400);
   background(255);
   smooth();
@@ -71,7 +67,6 @@ void setup() {
   //fft = new FFT(player.bufferSize(),player.sampleRate());
   //fft.logAverages(60,7);
   frameRate(rate);
-  
   
 }
 
@@ -100,25 +95,29 @@ void draw() {
     //RCommand.setSegmentLength(fft.getAvg(1)*2000);
     RCommand.setSegmentator(RCommand.UNIFORMLENGTH);
     
-    text = myText[counter];
+    text = words[counter];
+    
     RGroup myGoup = font.toGroup(text);
     frameCounter = frameCounter + (frameCount/frameCount);
     
-    if (frameCounter == rate*3)
+    println(counter);
+    if (frameCounter == rate*1)
     {    
-      counter = counter + 1;
+      counter = counter + 1;      
       frameCounter = 0;
-    }  
+      
+    }
     
-    if (counter > (myText.length * 1/2)-1)
-    {
+    if (counter == words.length) {
+      words = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/word_lists/1_1.csv");
+      counter = 0;
+      frameCounter = 0;
       player[0].pause();
-      //player[song_idx = (song_idx + 1) % player.length].play();
       song_idx = 1;
       player[song_idx].play();
     }
-    
-    
+        
+        
     RPoint[] myPoints = myGoup.getPoints();
     beginShape(TRIANGLE_STRIP);
     
@@ -148,6 +147,7 @@ void create_word_lists (String datadir, String subj_id) {
   f.mkdir();
   String[] lines = loadStrings(datadir + "stimuli/longpool_audio.csv");
   word_table = new Table();
+  
   // create array of values ranging from 1 length of "lines"  
   Integer[] arr = new Integer[lines.length];
   for (int i = 0; i < arr.length; i++) {
