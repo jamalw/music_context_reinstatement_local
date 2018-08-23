@@ -16,27 +16,24 @@ RFont font;
 Table word_table;
 Table song_table;
 int[] conditions = {0,1,2,3,0,1,2,3,0,1,2,3};
-
 String[] subj_id = {"test_subj"};
 String[] datadir = {"/Users/jamalw/Desktop/PNI/music_context_reinstatement/"};
 boolean displayinstructioncommand = true;
-
-//Prepare variables for subject word lists creation
-int run = 1;
-int list_num = 0;
-
+boolean display_end_of_list = false;
 String[] myText = {"Music", "Sound", "Motion", "Grapes", "Process", "Test", "Block", "Color", "Octopus", "Matrix", "Farmer", "Astro"};
-
 float rWidth, rHeight;
 int hVal;
 int counter = 0;
 int frameCounter = 0;
+int allwords_counter = 0;
 String text;
 int rate = 30;
 int song_idx = 0;
 String[] instructions;
 int index = 0;
 String[] words;
+int run = 1;
+int list_num = 0;
 
 //COULD USE A NOISE FUNCTION HERE FOR WIGGLE.
 boolean stopAnime = false;
@@ -49,7 +46,7 @@ void setup() {
   String[] instructions_split = loadStrings("FR_INSTRUCTIONS.txt");
   String instructions_join = join(instructions_split,"\n");  
   instructions = split(instructions_join,"\n");
-  words = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/word_lists/1_0.csv");  
+  words = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/word_lists/" + str(run) + "_" + str(list_num) +".csv");  
   size(900, 400);
   background(255);
   smooth();
@@ -85,8 +82,11 @@ void draw() {
       textAlign(CENTER,CENTER);
       text(instructions[i],-50,-250+i*20);
     }    
-  }
-  else {
+  } else if (display_end_of_list) {
+    textAlign(CENTER,CENTER);
+    textSize(40);
+    text("End of List",0,-100);
+  } else {
     float soundLevel = player[song_idx].mix.level(); //GET OUR AUDIO IN LEVEL
     
     //fft.forward(player.mix);
@@ -100,24 +100,29 @@ void draw() {
     RGroup myGoup = font.toGroup(text);
     frameCounter = frameCounter + (frameCount/frameCount);
     
-    println(counter);
     if (frameCounter == rate*1)
     {    
-      counter = counter + 1;      
+      counter = counter + 1;
+      allwords_counter = allwords_counter + 1;
       frameCounter = 0;
       
     }
     
+    // switch to list 2 and change to song 2
     if (counter == words.length) {
-      words = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/word_lists/1_1.csv");
+      list_num = 1;
+      words = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/word_lists/" + str(run) + "_" + str(list_num) +".csv");
       counter = 0;
       frameCounter = 0;
       player[0].pause();
       song_idx = 1;
       player[song_idx].play();
     }
-        
-        
+    
+    if (allwords_counter == 23) {
+      display_end_of_list = true;
+    }
+                    
     RPoint[] myPoints = myGoup.getPoints();
     beginShape(TRIANGLE_STRIP);
     
@@ -143,6 +148,9 @@ void draw() {
 
 
 void create_word_lists (String datadir, String subj_id) {
+  //Prepare variables for subject word lists creation
+  int run = 1;
+  int list_num = 0;
   File f = new File(datadir + "data/" + subj_id + "/stimuli/word_lists/");
   f.mkdir();
   String[] lines = loadStrings(datadir + "stimuli/longpool_audio.csv");
@@ -183,8 +191,7 @@ void create_word_lists (String datadir, String subj_id) {
       }
       
     } 
-    
-    
+        
   }
 }
 
