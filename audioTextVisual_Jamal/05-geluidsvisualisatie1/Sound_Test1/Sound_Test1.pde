@@ -10,7 +10,7 @@ import java.io.File;
 
 PImage fade;
 FFT fft;
-AudioPlayer[] player = new AudioPlayer[2];
+AudioPlayer[] player = new AudioPlayer[21];
 Minim mySound; //CREATE A NEW SOUND OBJECT
 
 // for recording
@@ -27,7 +27,6 @@ String[] subj_id = {"test_subj"};
 String[] datadir = {"/Users/jamalw/Desktop/PNI/music_context_reinstatement/"};
 boolean displayinstructioncommand = true;
 boolean display_end_of_list = false;
-String[] myText = {"Music", "Sound", "Motion", "Grapes", "Process", "Test", "Block", "Color", "Octopus", "Matrix", "Farmer", "Astro"};
 float rWidth, rHeight;
 int hVal;
 int counter = 0;
@@ -39,6 +38,7 @@ int song_idx = 0;
 String[] instructions;
 int index = 0;
 String[] words;
+String[] songs;
 int run = 1;
 int list_num = 0;
 
@@ -53,7 +53,8 @@ void setup() {
   String[] instructions_split = loadStrings("FR_INSTRUCTIONS.txt");
   String instructions_join = join(instructions_split,"\n");  
   instructions = split(instructions_join,"\n");
-  words = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/word_lists/" + str(run) + "_" + str(list_num) +".csv");  
+  words = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/word_lists/" + str(run) + "_" + str(list_num) +".csv");
+  songs = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/songs/song_list.csv");
   size(900, 400);
   background(255);
   smooth();
@@ -65,8 +66,11 @@ void setup() {
   rWidth = width * 0.99;
   rHeight = height * 0.99;
   hVal = 0;
-  player[0] = mySound.loadFile("Kamasi Washington - Change of the Guard-2 3.mp3",2048);
-  player[1] = mySound.loadFile("11 Davibe.mp3",2048);
+  for (int i = 0; i < songs.length; i++) {
+    player[i] = mySound.loadFile(songs[i],2048);
+  }
+  //player[0] = mySound.loadFile(songs[0],2048);
+  //player[1] = mySound.loadFile(songs[1],2048);
   //player[0].play();
   //fft = new FFT(player.bufferSize(),player.sampleRate());
   //fft.logAverages(60,7);
@@ -111,7 +115,22 @@ void draw() {
     }
     if (frameCounter == rate*10) {
       recorder.endRecord();
-      recorder.save();
+      recorder.save();      
+    }
+    if (frameCounter > rate*10 && frameCounter <= rate*13){
+      textAlign(CENTER,CENTER);
+      textSize(40);    
+      text("Starting next run",0,-100);      
+    }
+    if (frameCounter == rate*13){
+      display_end_of_list = false;
+      counter = 0;
+      allwords_counter = 0;
+      frameCounter = 0;
+      run = run + 1;
+      list_num = 0;
+      song_idx = song_idx + 1;
+      player[song_idx].play();
     }
   } else {
     float soundLevel = player[song_idx].mix.level(); //GET OUR AUDIO IN LEVEL
@@ -141,8 +160,8 @@ void draw() {
       words = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/word_lists/" + str(run) + "_" + str(list_num) +".csv");
       counter = 0;
       frameCounter = 0;
-      player[0].pause();
-      song_idx = 1;
+      player[song_idx].pause();
+      song_idx = song_idx + 1;
       player[song_idx].play();
     }
     
