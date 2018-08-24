@@ -1,6 +1,7 @@
 import geomerative.*;
 import ddf.minim.*;
 import ddf.minim.analysis.*;
+import ddf.minim.ugens.*;
 import processing.video.*;
 import java.util.Collections;
 import java.util.Arrays;
@@ -11,7 +12,13 @@ PImage fade;
 FFT fft;
 AudioPlayer[] player = new AudioPlayer[2];
 Minim mySound; //CREATE A NEW SOUND OBJECT
+
+// for recording
+Minim myRec;
 AudioInput in;
+AudioRecorder recorder;
+boolean recorded;
+
 RFont font;
 Table word_table;
 Table song_table;
@@ -53,7 +60,7 @@ void setup() {
   RG.init(this); 
   font = new RFont("FreeSans.ttf", 200, CENTER);
   mySound = new Minim(this);
-  in = mySound.getLineIn(Minim.STEREO,512);
+  in = mySound.getLineIn(Minim.STEREO,2048);
   fade = get(0, 0,width, height);
   rWidth = width * 0.99;
   rHeight = height * 0.99;
@@ -64,6 +71,7 @@ void setup() {
   //fft = new FFT(player.bufferSize(),player.sampleRate());
   //fft.logAverages(60,7);
   frameRate(rate);
+  recorder = mySound.createRecorder(in, "myrecording.wav");
   
 }
 
@@ -83,9 +91,28 @@ void draw() {
       text(instructions[i],-50,-250+i*20);
     }    
   } else if (display_end_of_list) {
-    textAlign(CENTER,CENTER);
-    textSize(40);
-    text("End of List",0,-100);
+    player[song_idx].pause();
+    frameCounter = frameCounter + (frameCount/frameCount);
+    if (frameCounter <= rate*3){
+      textAlign(CENTER,CENTER);
+      textSize(40);    
+      text("End of List",0,-100);      
+    }
+    if (frameCounter > rate*3 && frameCounter <= rate*6){
+      textAlign(CENTER,CENTER);
+      textSize(40);    
+      text("Recall List",0,-100);      
+    }
+    if (frameCounter > rate*6 && frameCounter <= rate*10){
+      textAlign(CENTER,CENTER);
+      textSize(40);    
+      text("...",0,-100);
+      recorder.beginRecord();      
+    }
+    if (frameCounter == rate*10) {
+      recorder.endRecord();
+      recorder.save();
+    }
   } else {
     float soundLevel = player[song_idx].mix.level(); //GET OUR AUDIO IN LEVEL
     
