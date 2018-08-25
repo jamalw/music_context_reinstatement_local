@@ -32,6 +32,7 @@ int hVal;
 int counter = 0;
 int frameCounter = 0;
 int allwords_counter = 0;
+int conds_counter = 0;
 String text;
 int rate = 30;
 int song_idx = 0;
@@ -68,10 +69,7 @@ void setup() {
   hVal = 0;
   for (int i = 0; i < songs.length; i++) {
     player[i] = mySound.loadFile(songs[i],2048);
-  }
-  //player[0] = mySound.loadFile(songs[0],2048);
-  //player[1] = mySound.loadFile(songs[1],2048);
-  //player[0].play();
+  }  
   //fft = new FFT(player.bufferSize(),player.sampleRate());
   //fft.logAverages(60,7);
   frameRate(rate);
@@ -100,7 +98,14 @@ void draw() {
     if (frameCounter <= rate*3){
       textAlign(CENTER,CENTER);
       textSize(40);    
-      text("End of List",0,-100);      
+      text("End of List",0,-100);
+      if (conditions[conds_counter] == 0){        
+        player[song_idx - 1].rewind();
+      } else if (conditions[conds_counter] == 1 || conditions[conds_counter] == 3){        
+        player[song_idx].rewind();        
+      } else if (conditions[conds_counter] == 2) { 
+        player[song_idx + 1].rewind();
+      }
     }
     if (frameCounter > rate*3 && frameCounter <= rate*6){
       textAlign(CENTER,CENTER);
@@ -111,10 +116,25 @@ void draw() {
       textAlign(CENTER,CENTER);
       textSize(40);    
       text("...",0,-100);
-      recorder.beginRecord();      
+      recorder.beginRecord(); 
+      println(conditions[conds_counter]);
+      if (conditions[conds_counter] == 0){        
+        player[song_idx - 1].play();
+      } else if (conditions[conds_counter] == 1 || conditions[conds_counter] == 3){        
+        player[song_idx].play();        
+      } else if (conditions[conds_counter] == 2) { 
+        player[song_idx + 1].play();
+      }
     }
-    if (frameCounter == rate*10) {
+    if (frameCounter == rate*10) {      
       recorder.endRecord();
+      if (conditions[conds_counter] == 0){
+        player[song_idx - 1].pause();
+      } else if (conditions[conds_counter] == 1 || conditions[conds_counter] == 3){
+        player[song_idx].pause();        
+      } else if (conditions[conds_counter] == 2) {
+        player[song_idx + 1].pause();
+      }
       recorder.save();      
     }
     if (frameCounter > rate*10 && frameCounter <= rate*13){
@@ -129,7 +149,14 @@ void draw() {
       frameCounter = 0;
       run = run + 1;
       list_num = 0;
-      song_idx = song_idx + 1;
+      
+      if (conditions[conds_counter] == 2){
+        song_idx = song_idx + 2;
+      }else{
+        song_idx = song_idx + 1;
+      }
+      
+      conds_counter = conds_counter + 1;            
       player[song_idx].play();
     }
   } else {
@@ -137,7 +164,7 @@ void draw() {
     
     //fft.forward(player.mix);
     
-    RCommand.setSegmentLength(soundLevel*120);
+    RCommand.setSegmentLength(soundLevel*300);
     //RCommand.setSegmentLength(fft.getAvg(1)*2000);
     RCommand.setSegmentator(RCommand.UNIFORMLENGTH);
     
@@ -161,8 +188,14 @@ void draw() {
       counter = 0;
       frameCounter = 0;
       player[song_idx].pause();
-      song_idx = song_idx + 1;
-      player[song_idx].play();
+      if (conditions[conds_counter] == 0 || conditions[conds_counter] == 3){
+        song_idx = song_idx + 1;
+        player[song_idx].play();
+      } else if (conditions[conds_counter] == 1 || conditions[conds_counter] == 2){
+        player[song_idx].rewind();
+        player[song_idx].play();
+      }
+      
     }
     
     if (allwords_counter == 23) {
