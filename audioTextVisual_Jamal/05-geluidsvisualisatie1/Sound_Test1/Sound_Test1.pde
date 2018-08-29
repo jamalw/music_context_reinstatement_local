@@ -116,8 +116,7 @@ void draw() {
       textAlign(CENTER,CENTER);
       textSize(40);    
       text("...",0,-100);
-      recorder.beginRecord(); 
-      println(conditions[conds_counter]);
+      recorder.beginRecord();       
       if (conditions[conds_counter] == 0){        
         player[song_idx - 1].play();
       } else if (conditions[conds_counter] == 1 || conditions[conds_counter] == 3){        
