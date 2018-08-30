@@ -42,6 +42,7 @@ String[] words;
 String[] songs;
 int run = 1;
 int list_num = 0;
+PrintWriter log;
 
 //COULD USE A NOISE FUNCTION HERE FOR WIGGLE.
 boolean stopAnime = false;
@@ -56,6 +57,7 @@ void setup() {
   instructions = split(instructions_join,"\n");
   words = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/word_lists/" + str(run) + "_" + str(list_num) +".csv");
   songs = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/songs/song_list.csv");
+  String subj_logfile = datadir[0] + "data/" + subj_id[0] + '/' + subj_id[0] + "_mcr.log";
   size(900, 400);
   background(255);
   smooth();
@@ -74,6 +76,8 @@ void setup() {
   //fft.logAverages(60,7);
   frameRate(rate);
   recorder = mySound.createRecorder(in, "myrecording.wav");
+  log = createWriter(subj_logfile);
+  
   
 }
 
@@ -139,7 +143,9 @@ void draw() {
     if (frameCounter > rate*10 && frameCounter <= rate*13){
       textAlign(CENTER,CENTER);
       textSize(40);    
-      text("Starting next run",0,-100);      
+      text("Starting next run",0,-100); 
+      log.flush();
+      //log.close();
     }
     if (frameCounter == rate*13){
       display_end_of_list = false;
@@ -155,8 +161,10 @@ void draw() {
         song_idx = song_idx + 1;
       }
       
-      conds_counter = conds_counter + 1;            
-      player[song_idx].play();
+      conds_counter = conds_counter + 1;
+      log.println(second() + "     playing_song: "+ song_idx + " - " + songs[song_idx]);
+      log.println(second() + "     starting_list: 1");
+      player[song_idx].play();      
     }
   } else {
     float soundLevel = player[song_idx].mix.level(); //GET OUR AUDIO IN LEVEL
@@ -167,14 +175,18 @@ void draw() {
     //RCommand.setSegmentLength(fft.getAvg(1)*2000);
     RCommand.setSegmentator(RCommand.UNIFORMLENGTH);
     
-    text = words[counter];
+    text = words[counter];    
+    
     
     RGroup myGoup = font.toGroup(text);
     frameCounter = frameCounter + (frameCount/frameCount);
     
+    // if x seconds (framerate * x) has passed then progress to the next word
     if (frameCounter == rate*1)
-    {    
-      counter = counter + 1;
+    {       
+      log.println(second() + "     present_word: " + text);      
+      counter = counter + 1;      
+      println(counter);
       allwords_counter = allwords_counter + 1;
       frameCounter = 0;
       
@@ -182,11 +194,12 @@ void draw() {
     
     // switch to list 2 and change to song 2
     if (counter == words.length) {
+      log.println(second() + "     starting_list: 2");
       list_num = 1;
       words = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/word_lists/" + str(run) + "_" + str(list_num) +".csv");
       counter = 0;
       frameCounter = 0;
-      player[song_idx].pause();
+      player[song_idx].pause();      
       if (conditions[conds_counter] == 0 || conditions[conds_counter] == 3){
         song_idx = song_idx + 1;
         player[song_idx].play();
@@ -197,7 +210,7 @@ void draw() {
       
     }
     
-    if (allwords_counter == 23) {
+    if (allwords_counter == 24) {
       display_end_of_list = true;
     }
                     
@@ -295,7 +308,10 @@ saveTable(song_table, datadir + "data/" + subj_id + "/stimuli/songs/song_list.cs
 void keyReleased() {
   if (displayinstructioncommand) {
     displayinstructioncommand=false;
-    player[0].play();
+    log.println(second() + "     begin_exp   : " + subj_id[0]);
+    log.println(second() + "     playing_song: 0 - " + songs[0]);
+    player[0].play(); 
+    log.println(second() + "     starting_list: 1");
     }
     else {
     if (key == 'f') 
