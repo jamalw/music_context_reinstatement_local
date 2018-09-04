@@ -16,7 +16,7 @@ Minim mySound; //CREATE A NEW SOUND OBJECT
 // for recording
 Minim myRec;
 AudioInput in;
-AudioRecorder recorder;
+AudioRecorder[] recorder = new AudioRecorder[12];
 boolean recorded;
 
 RFont font;
@@ -52,12 +52,15 @@ void setup() {
   //Setup new subject if it has not been done already
   create_word_lists(datadir[0], subj_id[0]);
   create_song_list(datadir[0], subj_id[0]);
+  create_data_directory(datadir[0], subj_id[0]);
+  File d = new File(datadir[0] + subj_id[0] + "/data");
+  d.mkdir();
   String[] instructions_split = loadStrings("FR_INSTRUCTIONS.txt");
   String instructions_join = join(instructions_split,"\n");  
   instructions = split(instructions_join,"\n");
   words = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/word_lists/" + str(run) + "_" + str(list_num) +".csv");
   songs = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/songs/song_list.csv");
-  String subj_logfile = datadir[0] + "data/" + subj_id[0] + '/' + subj_id[0] + "_mcr.log";
+  String subj_logfile = datadir[0] + "data/" + subj_id[0] + "/data/" + subj_id[0] + "_mcr.log";
   size(900, 400);
   background(255);
   smooth();
@@ -74,8 +77,10 @@ void setup() {
   }  
   //fft = new FFT(player.bufferSize(),player.sampleRate());
   //fft.logAverages(60,7);
-  frameRate(rate);
-  recorder = mySound.createRecorder(in, "myrecording.wav");
+  frameRate(rate);  
+  for (int i = 0; i < 12; i++){
+    recorder[i] = mySound.createRecorder(in, datadir[0] + "data/" + subj_id[0] + "/data/myrecording_run_" + str(i) + ".wav");
+  }
   log = createWriter(subj_logfile);
   
   
@@ -103,49 +108,35 @@ void draw() {
       textAlign(CENTER,CENTER);
       textSize(40);    
       text("End of List",0,-100);
-      if (conditions[conds_counter] == 0){        
-        player[song_idx - 1].rewind();
-      } else if (conditions[conds_counter] == 1 || conditions[conds_counter] == 3){        
-        player[song_idx].rewind();        
-      } else if (conditions[conds_counter] == 2) { 
-        player[song_idx + 1].rewind();
-      }
+      // rewind song for playback during recall
+      rewind_song(conditions[conds_counter]);
     }
     if (frameCounter > rate*3 && frameCounter <= rate*6){
       textAlign(CENTER,CENTER);
       textSize(40);    
-      text("Recall List",0,-100);      
+      text("Recall List",0,-100);           
     }
     if (frameCounter > rate*6 && frameCounter <= rate*10){
       textAlign(CENTER,CENTER);
       textSize(40);    
       text("...",0,-100);
-      recorder.beginRecord();       
-      if (conditions[conds_counter] == 0){        
-        player[song_idx - 1].play();
-      } else if (conditions[conds_counter] == 1 || conditions[conds_counter] == 3){        
-        player[song_idx].play();        
-      } else if (conditions[conds_counter] == 2) { 
-        player[song_idx + 1].play();
+      recorder[conds_counter].beginRecord();       
+      if (frameCounter == rate*7){
+        log.println(second() + "     event: Start Recording");
       }
+      play_song(conditions[conds_counter]);
     }
     if (frameCounter == rate*10) {      
-      recorder.endRecord();
-      if (conditions[conds_counter] == 0){
-        player[song_idx - 1].pause();
-      } else if (conditions[conds_counter] == 1 || conditions[conds_counter] == 3){
-        player[song_idx].pause();        
-      } else if (conditions[conds_counter] == 2) {
-        player[song_idx + 1].pause();
-      }
-      recorder.save();      
+      recorder[conds_counter].endRecord();
+      log.println(second() + "     event: End Recording");
+      pause_song(conditions[conds_counter]);
+      recorder[conds_counter].save();      
+      log.println(second() + "     event: Save Recording");
     }
     if (frameCounter > rate*10 && frameCounter <= rate*13){
       textAlign(CENTER,CENTER);
       textSize(40);    
-      text("Starting next run",0,-100); 
-      log.flush();
-      //log.close();
+      text("Starting next run",0,-100);             
     }
     if (frameCounter == rate*13){
       display_end_of_list = false;
@@ -153,7 +144,8 @@ void draw() {
       allwords_counter = 0;
       frameCounter = 0;
       run = run + 1;
-      list_num = 0;
+      log.println(second() + "     starting_run: " + run);
+      list_num = 0;      
       
       if (conditions[conds_counter] == 2){
         song_idx = song_idx + 2;
@@ -164,7 +156,9 @@ void draw() {
       conds_counter = conds_counter + 1;
       log.println(second() + "     playing_song: "+ song_idx + " - " + songs[song_idx]);
       log.println(second() + "     starting_list: 1");
-      player[song_idx].play();      
+      player[song_idx].play();
+      log.flush();
+      
     }
   } else {
     float soundLevel = player[song_idx].mix.level(); //GET OUR AUDIO IN LEVEL
@@ -193,22 +187,7 @@ void draw() {
     }
     
     // switch to list 2 and change to song 2
-    if (counter == words.length) {
-      log.println(second() + "     starting_list: 2");
-      list_num = 1;
-      words = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/word_lists/" + str(run) + "_" + str(list_num) +".csv");
-      counter = 0;
-      frameCounter = 0;
-      player[song_idx].pause();      
-      if (conditions[conds_counter] == 0 || conditions[conds_counter] == 3){
-        song_idx = song_idx + 1;
-        player[song_idx].play();
-      } else if (conditions[conds_counter] == 1 || conditions[conds_counter] == 2){
-        player[song_idx].rewind();
-        player[song_idx].play();
-      }
-      
-    }
+    setup_list2(conditions[conds_counter]);
     
     if (allwords_counter == 24) {
       display_end_of_list = true;
@@ -235,7 +214,7 @@ void draw() {
   }
 }
 
-//--------------Prepare subject's directory, word lists, and songs------------------
+//--------------PREPARE SUBJECT'S DIRECTORY, WORD LISTS, AND SONGS------------------
 
 
 void create_word_lists (String datadir, String subj_id) {
@@ -303,15 +282,89 @@ saveTable(song_table, datadir + "data/" + subj_id + "/stimuli/songs/song_list.cs
   
 }
 
+void create_data_directory(String datadir, String subj_id) {
+  File f = new File(datadir + "data/" + subj_id + "/data/");
+  f.mkdir();  
+  
+}
+
+//--------------FUNCTIONS FOR EXPERIMENT FLOW------------------
+
+// This function rewinds a given song to playback during recall
+void rewind_song (int cond_num) {
+  if (cond_num == 0){        
+    player[song_idx - 1].rewind();
+  } else if (cond_num == 1 || cond_num == 3){        
+    player[song_idx].rewind();        
+  } else if (cond_num == 2) { 
+    player[song_idx + 1].rewind();
+  }  
+}
+
+// This function plays a given song during recall
+void play_song (int cond_num) {
+  int log_playtime = rate * 7;
+  
+  if (cond_num == 0){        
+    player[song_idx - 1].play();
+    if (frameCounter == log_playtime){
+      log.println(second() + "     playing_song: "+ song_idx + " - " + songs[song_idx - 1]);
+    }
+  } else if (cond_num == 1 || cond_num == 3){        
+    player[song_idx].play();        
+    if (frameCounter == log_playtime){
+      log.println(second() + "     playing_song: "+ song_idx + " - " + songs[song_idx]);
+    }
+  } else if (cond_num == 2) { 
+    player[song_idx + 1].play();
+    if (frameCounter == log_playtime){
+      log.println(second() + "     playing_song: "+ song_idx + " - " + songs[song_idx + 1]);
+    }
+  }      
+}
+
+// This function pauses a given song after recall
+void pause_song (int cond_num) {
+  if (cond_num == 0){
+    player[song_idx - 1].pause();
+  } else if (cond_num == 1 || cond_num == 3){
+    player[song_idx].pause();        
+  } else if (cond_num == 2) {
+    player[song_idx + 1].pause();
+  }
+}
+
+// This function switches to list 2 and changes to song 2
+void setup_list2(int cond_num){
+  if (counter == words.length & list_num == 0) {      
+    list_num = 1;
+    words = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/word_lists/" + str(run) + "_" + str(list_num) +".csv");
+    counter = 0;
+    frameCounter = 0;
+    player[song_idx].pause();      
+    if (cond_num == 0 || cond_num == 3){
+      song_idx = song_idx + 1;
+      player[song_idx].play();
+    } else if (cond_num == 1 || cond_num == 2){
+      player[song_idx].rewind();
+      player[song_idx].play();
+    }
+    log.println(second() + "     playing_song: "+ song_idx + " - " + songs[song_idx]);
+    log.println(second() + "     starting_list: 2");
+    
+  }  
+}
+
 
 //----------------KEYS---------------------------------
 void keyReleased() {
   if (displayinstructioncommand) {
     displayinstructioncommand=false;
     log.println(second() + "     begin_exp   : " + subj_id[0]);
+    log.println(second() + "     starting_run: " + run);
     log.println(second() + "     playing_song: 0 - " + songs[0]);
-    player[0].play(); 
-    log.println(second() + "     starting_list: 1");
+    player[0].play();     
+    log.println(second() + "     starting_list: 1");    
     }
     else {
     if (key == 'f') 
@@ -320,6 +373,13 @@ void keyReleased() {
       noLoop(); 
     else loop();
     }
+}
+
+void keyPressed() {
+  if (key == ESC){
+    log.flush();
+    log.close();
+  }
 }
 
 //////////////////////////////////////////////
