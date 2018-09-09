@@ -53,8 +53,6 @@ void setup() {
   create_word_lists(datadir[0], subj_id[0]);
   create_song_list(datadir[0], subj_id[0]);
   create_data_directory(datadir[0], subj_id[0]);
-  File d = new File(datadir[0] + subj_id[0] + "/data");
-  d.mkdir();
   String[] instructions_split = loadStrings("FR_INSTRUCTIONS.txt");
   String instructions_join = join(instructions_split,"\n");  
   instructions = split(instructions_join,"\n");
@@ -145,7 +143,8 @@ void draw() {
       frameCounter = 0;
       run = run + 1;
       log.println(second() + "     starting_run: " + run);
-      list_num = 0;      
+      list_num = 0;     
+      words = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/word_lists/" + str(run) + "_" + str(list_num) +".csv");
       
       if (conditions[conds_counter] == 2){
         song_idx = song_idx + 2;
