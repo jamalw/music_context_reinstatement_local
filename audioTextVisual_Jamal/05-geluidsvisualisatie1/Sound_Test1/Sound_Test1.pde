@@ -59,7 +59,8 @@ void setup() {
   words = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/word_lists/" + str(run) + "_" + str(list_num) +".csv");
   songs = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/songs/song_list.csv");
   String subj_logfile = datadir[0] + "data/" + subj_id[0] + "/data/" + subj_id[0] + "_mcr.log";
-  size(900, 400);
+  //size(900, 400);
+  fullScreen();
   background(255);
   smooth();
   RG.init(this); 
@@ -86,16 +87,16 @@ void setup() {
 
 //----------------DRAW---------------------------------
 void draw() {
-  background(255);
+  background(0);
   colorMode(HSB);
   stroke(hVal, 200, 200);
   colorMode(RGB);
   noFill();
-  translate(width/2, height/1.5);
+  translate(width/2, height/1.75);
   
   if (displayinstructioncommand) {
     for (int i = 0; i < instructions.length; i++){
-      fill(0);
+      fill(255);
       textAlign(CENTER,CENTER);
       text(instructions[i],-50,-250+i*20);
     }    
