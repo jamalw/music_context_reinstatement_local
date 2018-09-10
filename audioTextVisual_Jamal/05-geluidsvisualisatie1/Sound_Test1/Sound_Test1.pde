@@ -49,38 +49,53 @@ boolean stopAnime = false;
 
 //----------------SETUP---------------------------------
 void setup() {
-  //Setup new subject if it has not been done already
+  // Setup new subject if it has not been done already
   create_word_lists(datadir[0], subj_id[0]);
   create_song_list(datadir[0], subj_id[0]);
   create_data_directory(datadir[0], subj_id[0]);
+  
+  // Setup instructions
   String[] instructions_split = loadStrings("FR_INSTRUCTIONS.txt");
   String instructions_join = join(instructions_split,"\n");  
   instructions = split(instructions_join,"\n");
+  
+  // Prepare words, songs, and recordings
   words = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/word_lists/" + str(run) + "_" + str(list_num) +".csv");
   songs = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/songs/song_list.csv");
+  mySound = new Minim(this);
+  in = mySound.getLineIn(Minim.STEREO,2048);
+  // Store each song in player variable
+  for (int i = 0; i < songs.length; i++) {
+    player[i] = mySound.loadFile(songs[i],2048);
+  }  
+  // Store each (blank) recording object in recorder variable
+  for (int i = 0; i < 12; i++){
+    recorder[i] = mySound.createRecorder(in, datadir[0] + "data/" + subj_id[0] + "/data/myrecording_run_" + str(i) + ".wav");
+  }
+  
+  // Prepare subject's logfile
   String subj_logfile = datadir[0] + "data/" + subj_id[0] + "/data/" + subj_id[0] + "_mcr.log";
+  log = createWriter(subj_logfile);
+  
+  // Setup screen
   //size(900, 400);
   fullScreen();
   background(255);
   smooth();
+  frameRate(rate);
   RG.init(this); 
   font = new RFont("FreeSans.ttf", 200, CENTER);
-  mySound = new Minim(this);
-  in = mySound.getLineIn(Minim.STEREO,2048);
+  
   fade = get(0, 0,width, height);
   rWidth = width * 0.99;
   rHeight = height * 0.99;
   hVal = 0;
-  for (int i = 0; i < songs.length; i++) {
-    player[i] = mySound.loadFile(songs[i],2048);
-  }  
+  
   //fft = new FFT(player.bufferSize(),player.sampleRate());
   //fft.logAverages(60,7);
-  frameRate(rate);  
-  for (int i = 0; i < 12; i++){
-    recorder[i] = mySound.createRecorder(in, datadir[0] + "data/" + subj_id[0] + "/data/myrecording_run_" + str(i) + ".wav");
-  }
-  log = createWriter(subj_logfile);
+    
+  
+  
   
   
 }
@@ -94,6 +109,7 @@ void draw() {
   noFill();
   translate(width/2, height/1.75);
   
+  // Go into instruction mode
   if (displayinstructioncommand) {
     for (int i = 0; i < instructions.length; i++){
       fill(255);
@@ -119,13 +135,15 @@ void draw() {
       textAlign(CENTER,CENTER);
       textSize(40);    
       text("...",0,-100);
+      // Start recording
       recorder[conds_counter].beginRecord();       
       if (frameCounter == rate*7){
         log.println(second() + "     event: Start Recording");
       }
       play_song(conditions[conds_counter]);
     }
-    if (frameCounter == rate*10) {      
+    if (frameCounter == rate*10) {    
+      // End Recording
       recorder[conds_counter].endRecord();
       log.println(second() + "     event: End Recording");
       pause_song(conditions[conds_counter]);
@@ -138,6 +156,7 @@ void draw() {
       text("Starting next run",0,-100);             
     }
     if (frameCounter == rate*13){
+      // Prepare all variables for next run
       display_end_of_list = false;
       counter = 0;
       allwords_counter = 0;
@@ -147,6 +166,7 @@ void draw() {
       list_num = 0;     
       words = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/word_lists/" + str(run) + "_" + str(list_num) +".csv");
       
+      // If condition is AAB then move forward two songs to avoid replaying song B for the next run. Otherwise, move forward one song in all other conditions.
       if (conditions[conds_counter] == 2){
         song_idx = song_idx + 2;
       }else{
@@ -154,9 +174,9 @@ void draw() {
       }
       
       conds_counter = conds_counter + 1;
+      player[song_idx].play();
       log.println(second() + "     playing_song: "+ song_idx + " - " + songs[song_idx]);
       log.println(second() + "     starting_list: 1");
-      player[song_idx].play();
       log.flush();
       
     }
@@ -165,17 +185,16 @@ void draw() {
     
     //fft.forward(player.mix);
     
-    RCommand.setSegmentLength(soundLevel*300);
+    RCommand.setSegmentLength(soundLevel*300); //VISUALIZER EFFECT AMOUNT
     //RCommand.setSegmentLength(fft.getAvg(1)*2000);
     RCommand.setSegmentator(RCommand.UNIFORMLENGTH);
     
     text = words[counter];    
     
-    
     RGroup myGoup = font.toGroup(text);
     frameCounter = frameCounter + (frameCount/frameCount);
     
-    // if x seconds (framerate * x) has passed then progress to the next word
+    // If x seconds (framerate * x) has passed then progress to the next word
     if (frameCounter == rate*1)
     {       
       log.println(second() + "     present_word: " + text);      
@@ -186,9 +205,10 @@ void draw() {
       
     }
     
-    // switch to list 2 and change to song 2
+    // Switch to list 2 and change to song 2
     setup_list2(conditions[conds_counter]);
     
+    // If the end of the both lists is reached then go into end of lists mode (recall)
     if (allwords_counter == 24) {
       display_end_of_list = true;
     }
@@ -359,10 +379,10 @@ void setup_list2(int cond_num){
 //----------------KEYS---------------------------------
 void keyReleased() {
   if (displayinstructioncommand) {
-    displayinstructioncommand=false;
+    displayinstructioncommand=false;    
     log.println(second() + "     begin_exp   : " + subj_id[0]);
     log.println(second() + "     starting_run: " + run);
-    log.println(second() + "     playing_song: 0 - " + songs[0]);
+    log.println(second() + "     playing_song: 0 - " + songs[0]);    
     player[0].play();     
     log.println(second() + "     starting_list: 1");    
     }
