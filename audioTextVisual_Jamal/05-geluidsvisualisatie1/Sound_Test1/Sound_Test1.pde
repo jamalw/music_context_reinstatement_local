@@ -31,6 +31,7 @@ float rWidth, rHeight;
 int hVal;
 int counter = 0;
 int frameCounter = 0;
+int phaseFrameCounter = 0;
 int allwords_counter = 0;
 int conds_counter = 0;
 String text;
@@ -93,11 +94,7 @@ void setup() {
   
   //fft = new FFT(player.bufferSize(),player.sampleRate());
   //fft.logAverages(60,7);
-    
-  
-  
-  
-  
+     
 }
 
 //----------------DRAW---------------------------------
@@ -114,24 +111,31 @@ void draw() {
     for (int i = 0; i < instructions.length; i++){
       fill(255);
       textAlign(CENTER,CENTER);
-      text(instructions[i],-50,-250+i*20);
+      text(instructions[i],-50,-250+i*20); 
     }    
   } else if (display_end_of_list) {
     player[song_idx].pause();
-    frameCounter = frameCounter + (frameCount/frameCount);
+    frameCounter = frameCounter + 1;
+    
     if (frameCounter <= rate*3){
       textAlign(CENTER,CENTER);
       textSize(40);    
-      text("End of List",0,-100);
+      text("End of List",0,-100);      
+      
       // rewind song for playback during recall
       rewind_song(conditions[conds_counter]);
     }
-    if (frameCounter > rate*3 && frameCounter <= rate*6){
-      textAlign(CENTER,CENTER);
-      textSize(40);    
-      text("Recall List",0,-100);           
+    
+    else if (frameCounter <= rate*4){ // blank space
+      text(" ",0,-100); 
     }
-    if (frameCounter > rate*6 && frameCounter <= rate*10){
+    else if (frameCounter <= rate*7){
+      textAlign(CENTER,CENTER);
+      textSize(40);          
+      text("Recall List",0,-100);   
+      
+    }
+    else if (frameCounter <= rate*9.9){
       textAlign(CENTER,CENTER);
       textSize(40);    
       text("...",0,-100);
@@ -142,7 +146,7 @@ void draw() {
       }
       play_song(conditions[conds_counter]);
     }
-    if (frameCounter == rate*10) {    
+    else if (frameCounter == rate*10) {    
       // End Recording
       recorder[conds_counter].endRecord();
       log.println(second() + "     event: End Recording");
@@ -150,12 +154,15 @@ void draw() {
       recorder[conds_counter].save();      
       log.println(second() + "     event: Save Recording");
     }
-    if (frameCounter > rate*10 && frameCounter <= rate*13){
+    else if (frameCounter <= rate*13){
       textAlign(CENTER,CENTER);
       textSize(40);    
       text("Starting next run",0,-100);             
     }
-    if (frameCounter == rate*13){
+    else if (frameCounter <= rate*14.9){ // blank space
+      text(" ",0,-100); 
+    }
+    else if (frameCounter == rate*15){
       // Prepare all variables for next run
       display_end_of_list = false;
       counter = 0;
@@ -189,19 +196,56 @@ void draw() {
     //RCommand.setSegmentLength(fft.getAvg(1)*2000);
     RCommand.setSegmentator(RCommand.UNIFORMLENGTH);
     
-    text = words[counter];    
+    text = words[counter]; 
     
+    phaseFrameCounter = phaseFrameCounter + 1;
+
+    if (phaseFrameCounter < rate*2){
+      text(" ",0,-100); 
+    }
+    
+    else if (phaseFrameCounter == rate*2) {
+    
+          player[0].play();     
+
+    }
+    else {  
     RGroup myGoup = font.toGroup(text);
-    frameCounter = frameCounter + (frameCount/frameCount);
+    frameCounter = frameCounter + 1;
+    
+  
+    
+    if (frameCounter < rate*3){      
+      
+      RPoint[] myPoints = myGoup.getPoints();
+      beginShape(TRIANGLE_STRIP);
+      
+      
+      for (int i=0; i<myPoints.length; i++)
+      //for(int i=0; i<fft.avgSize();i++)
+      {
+        vertex(myPoints[i].x, myPoints[i].y);
+      }
+      //fade = get(0, 0, width, height);    
+      
+      hVal += 2;
+      if ( hVal > 255)
+      {
+        hVal = 0;
+      }
+        
+      endShape();
+      
+    }
     
     // If x seconds (framerate * x) has passed then progress to the next word
-    if (frameCounter == rate*1)
+    else if (frameCounter == rate*6)
     {       
       log.println(second() + "     present_word: " + text);      
       counter = counter + 1;      
       println(counter);
       allwords_counter = allwords_counter + 1;
-      frameCounter = 0;
+      frameCounter = 0;      
       
     }
     
@@ -213,25 +257,8 @@ void draw() {
       display_end_of_list = true;
     }
                     
-    RPoint[] myPoints = myGoup.getPoints();
-    beginShape(TRIANGLE_STRIP);
-    
-    
-    for (int i=0; i<myPoints.length; i++)
-    //for(int i=0; i<fft.avgSize();i++)
-    {
-      vertex(myPoints[i].x, myPoints[i].y);
-    }
-    //fade = get(0, 0, width, height);    
-    
-    hVal += 2;
-    if ( hVal > 255)
-    {
-      hVal = 0;
-    }
-      
-    endShape();
-  }
+   
+  } }
 }
 
 //--------------PREPARE SUBJECT'S DIRECTORY, WORD LISTS, AND SONGS------------------
@@ -375,15 +402,26 @@ void setup_list2(int cond_num){
   }  
 }
 
+// This function puts up a blank screen for a specified duration
+void blank_screen(int dur){
+  background(0);
+  delay(dur);
+  
+}
+
 
 //----------------KEYS---------------------------------
 void keyReleased() {
   if (displayinstructioncommand) {
-    displayinstructioncommand=false;    
+    displayinstructioncommand=false; 
+    phaseFrameCounter = 0;
+    
+    textAlign(CENTER,CENTER);
+    textSize(40);   
+          
     log.println(second() + "     begin_exp   : " + subj_id[0]);
     log.println(second() + "     starting_run: " + run);
     log.println(second() + "     playing_song: 0 - " + songs[0]);    
-    player[0].play();     
     log.println(second() + "     starting_list: 1");    
     }
     else {
