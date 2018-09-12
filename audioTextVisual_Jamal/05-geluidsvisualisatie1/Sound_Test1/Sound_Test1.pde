@@ -22,11 +22,13 @@ boolean recorded;
 RFont font;
 Table word_table;
 Table song_table;
-int[] conditions = {0,1,2,3,0,1,2,3,0,1,2,3};
+//int[] conditions = {0,1,2,3,0,1,2,3,0,1,2,3};
+int[] conditions = {0};
 String[] subj_id = {"test_subj"};
 String[] datadir = {"/Users/jamalw/Desktop/PNI/music_context_reinstatement/"};
 boolean displayinstructioncommand = true;
 boolean display_end_of_list = false;
+boolean display_end_of_study = false;
 float rWidth, rHeight;
 int hVal;
 int counter = 0;
@@ -56,7 +58,7 @@ void setup() {
   create_data_directory(datadir[0], subj_id[0]);
   
   // Setup instructions
-  String[] instructions_split = loadStrings("FR_INSTRUCTIONS.txt");
+  String[] instructions_split = loadStrings(datadir[0] + "prompts/FR_INSTRUCTIONS.txt");
   String instructions_join = join(instructions_split,"\n");  
   instructions = split(instructions_join,"\n");
   
@@ -113,8 +115,18 @@ void draw() {
       textAlign(CENTER,CENTER);
       text(instructions[i],-50,-250+i*20); 
     }    
-  } else if (display_end_of_list) {
-    player[song_idx].pause();
+  } 
+    else if (display_end_of_study) {
+      textAlign(CENTER,CENTER);
+      textSize(40);                
+      frameCounter = frameCounter +1;
+      text("This concludes the study",0,-100);   
+      if (frameCounter == rate*3){
+        exit();
+      }      
+    }
+    else if (display_end_of_list) {
+    player[song_idx].pause();    
     frameCounter = frameCounter + 1;
     
     if (frameCounter <= rate*3){
@@ -132,37 +144,43 @@ void draw() {
     else if (frameCounter <= rate*7){
       textAlign(CENTER,CENTER);
       textSize(40);          
-      text("Recall List",0,-100);   
-      
+      text("Recall List",0,-100);           
     }
-    else if (frameCounter <= rate*9.9){
+    else if (frameCounter <= rate*9){
+      text("+",0,-100);
+    }
+    else if (frameCounter >= rate*10 && frameCounter < rate*20){
       textAlign(CENTER,CENTER);
       textSize(40);    
-      text("...",0,-100);
+      text(" ",0,-100);
       // Start recording
-      recorder[conds_counter].beginRecord();       
-      if (frameCounter == rate*7){
+      recorder[conds_counter].beginRecord();  
+      play_song(conditions[conds_counter]); 
+      if (frameCounter == rate*10){
         log.println(second() + "     event: Start Recording");
-      }
-      play_song(conditions[conds_counter]);
+      }            
     }
-    else if (frameCounter == rate*10) {    
+    else if (frameCounter == rate*20) {    
       // End Recording
       recorder[conds_counter].endRecord();
       log.println(second() + "     event: End Recording");
-      pause_song(conditions[conds_counter]);
+      pause_song(conditions[conds_counter]);     
       recorder[conds_counter].save();      
       log.println(second() + "     event: Save Recording");
+      if (conds_counter == conditions.length - 1){
+        display_end_of_study = true; 
+        frameCounter = 0;
+      }
     }
-    else if (frameCounter <= rate*13){
+    else if (frameCounter >= rate*21 && frameCounter <= rate*24){
       textAlign(CENTER,CENTER);
       textSize(40);    
       text("Starting next run",0,-100);             
     }
-    else if (frameCounter <= rate*14.9){ // blank space
+    else if (frameCounter == rate*24){ // blank space
       text(" ",0,-100); 
     }
-    else if (frameCounter == rate*15){
+    else if (frameCounter == rate*26){
       // Prepare all variables for next run
       display_end_of_list = false;
       counter = 0;
@@ -187,6 +205,9 @@ void draw() {
       log.flush();
       
     }
+    else if (frameCounter == rate*24 && run == 12 && allwords_counter == 24 ){
+      display_end_of_study = true;      
+    }
   } else {
     float soundLevel = player[song_idx].mix.level(); //GET OUR AUDIO IN LEVEL
     
@@ -203,19 +224,16 @@ void draw() {
     if (phaseFrameCounter < rate*2){
       text(" ",0,-100); 
     }
-    
     else if (phaseFrameCounter == rate*2) {
-    
           player[0].play();     
-
     }
     else {  
     RGroup myGoup = font.toGroup(text);
     frameCounter = frameCounter + 1;
     
   
-    
-    if (frameCounter < rate*3){      
+    // Present nothing for rate*n seconds
+    if (frameCounter < rate*1){      
       
       RPoint[] myPoints = myGoup.getPoints();
       beginShape(TRIANGLE_STRIP);
@@ -239,11 +257,10 @@ void draw() {
     }
     
     // If x seconds (framerate * x) has passed then progress to the next word
-    else if (frameCounter == rate*6)
+    else if (frameCounter == rate*1)
     {       
       log.println(second() + "     present_word: " + text);      
-      counter = counter + 1;      
-      println(counter);
+      counter = counter + 1;            
       allwords_counter = allwords_counter + 1;
       frameCounter = 0;      
       
@@ -255,8 +272,7 @@ void draw() {
     // If the end of the both lists is reached then go into end of lists mode (recall)
     if (allwords_counter == 24) {
       display_end_of_list = true;
-    }
-                    
+    }    
    
   } }
 }
@@ -342,7 +358,7 @@ void rewind_song (int cond_num) {
   if (cond_num == 0){        
     player[song_idx - 1].rewind();
   } else if (cond_num == 1 || cond_num == 3){        
-    player[song_idx].rewind();        
+    player[song_idx].rewind();            
   } else if (cond_num == 2) { 
     player[song_idx + 1].rewind();
   }  
@@ -350,7 +366,7 @@ void rewind_song (int cond_num) {
 
 // This function plays a given song during recall
 void play_song (int cond_num) {
-  int log_playtime = rate * 7;
+  int log_playtime = rate * 10;
   
   if (cond_num == 0){        
     player[song_idx - 1].play();
@@ -358,7 +374,7 @@ void play_song (int cond_num) {
       log.println(second() + "     playing_song: "+ song_idx + " - " + songs[song_idx - 1]);
     }
   } else if (cond_num == 1 || cond_num == 3){        
-    player[song_idx].play();        
+    player[song_idx].play();            
     if (frameCounter == log_playtime){
       log.println(second() + "     playing_song: "+ song_idx + " - " + songs[song_idx]);
     }
@@ -375,7 +391,7 @@ void pause_song (int cond_num) {
   if (cond_num == 0){
     player[song_idx - 1].pause();
   } else if (cond_num == 1 || cond_num == 3){
-    player[song_idx].pause();        
+    player[song_idx].pause();            
   } else if (cond_num == 2) {
     player[song_idx + 1].pause();
   }
