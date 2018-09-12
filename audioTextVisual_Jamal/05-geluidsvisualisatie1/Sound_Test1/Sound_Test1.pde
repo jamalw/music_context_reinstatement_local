@@ -7,10 +7,12 @@ import java.util.Collections;
 import java.util.Arrays;
 import java.nio.file.*;
 import java.io.File;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 PImage fade;
 FFT fft;
-AudioPlayer[] player = new AudioPlayer[21];
+AudioPlayer[] player = new AudioPlayer[2];
 Minim mySound; //CREATE A NEW SOUND OBJECT
 
 // for recording
@@ -22,8 +24,7 @@ boolean recorded;
 RFont font;
 Table word_table;
 Table song_table;
-//int[] conditions = {0,1,2,3,0,1,2,3,0,1,2,3};
-int[] conditions = {0};
+int[] conditions = {0,1,2,3,0,1,2,3,0,1,2,3};
 String[] subj_id = {"test_subj"};
 String[] datadir = {"/Users/jamalw/Desktop/PNI/music_context_reinstatement/"};
 boolean displayinstructioncommand = true;
@@ -47,6 +48,7 @@ int run = 1;
 int list_num = 0;
 PrintWriter log;
 
+
 //COULD USE A NOISE FUNCTION HERE FOR WIGGLE.
 boolean stopAnime = false;
 
@@ -55,7 +57,8 @@ void setup() {
   // Setup new subject if it has not been done already
   create_word_lists(datadir[0], subj_id[0]);
   create_song_list(datadir[0], subj_id[0]);
-  create_data_directory(datadir[0], subj_id[0]);
+  create_data_directory(datadir[0], subj_id[0]);  
+  shuffleArray(conditions);  
   
   // Setup instructions
   String[] instructions_split = loadStrings(datadir[0] + "prompts/FR_INSTRUCTIONS.txt");
@@ -122,6 +125,7 @@ void draw() {
       frameCounter = frameCounter +1;
       text("This concludes the study",0,-100);   
       if (frameCounter == rate*3){
+        log.println(second() + "     event: End of Study");
         exit();
       }      
     }
@@ -149,7 +153,7 @@ void draw() {
     else if (frameCounter <= rate*9){
       text("+",0,-100);
     }
-    else if (frameCounter >= rate*10 && frameCounter < rate*20){
+    else if (frameCounter >= rate*10 && frameCounter < rate*70){
       textAlign(CENTER,CENTER);
       textSize(40);    
       text(" ",0,-100);
@@ -160,7 +164,7 @@ void draw() {
         log.println(second() + "     event: Start Recording");
       }            
     }
-    else if (frameCounter == rate*20) {    
+    else if (frameCounter == rate*70) {    
       // End Recording
       recorder[conds_counter].endRecord();
       log.println(second() + "     event: End Recording");
@@ -172,15 +176,15 @@ void draw() {
         frameCounter = 0;
       }
     }
-    else if (frameCounter >= rate*21 && frameCounter <= rate*24){
+    else if (frameCounter >= rate*71 && frameCounter <= rate*74){
       textAlign(CENTER,CENTER);
       textSize(40);    
       text("Starting next run",0,-100);             
     }
-    else if (frameCounter == rate*24){ // blank space
+    else if (frameCounter == rate*74){ // blank space
       text(" ",0,-100); 
     }
-    else if (frameCounter == rate*26){
+    else if (frameCounter == rate*76){
       // Prepare all variables for next run
       display_end_of_list = false;
       counter = 0;
@@ -205,7 +209,7 @@ void draw() {
       log.flush();
       
     }
-    else if (frameCounter == rate*24 && run == 12 && allwords_counter == 24 ){
+    else if (frameCounter == rate*74 && run == 12 && allwords_counter == 74 ){
       display_end_of_study = true;      
     }
   } else {
@@ -233,7 +237,7 @@ void draw() {
     
   
     // Present nothing for rate*n seconds
-    if (frameCounter < rate*1){      
+    if (frameCounter < rate*3){      
       
       RPoint[] myPoints = myGoup.getPoints();
       beginShape(TRIANGLE_STRIP);
@@ -257,7 +261,7 @@ void draw() {
     }
     
     // If x seconds (framerate * x) has passed then progress to the next word
-    else if (frameCounter == rate*1)
+    else if (frameCounter == rate*6)
     {       
       log.println(second() + "     present_word: " + text);      
       counter = counter + 1;            
@@ -330,7 +334,7 @@ void create_word_lists (String datadir, String subj_id) {
 
 void create_song_list (String datadir, String subj_id) {
   song_table = new Table();
-  File f = new File(datadir + "stimuli/songs/");
+  File f = new File(datadir + "stimuli/temp_songs/");
   ArrayList<String> names = new ArrayList<String>(Arrays.asList(f.list()));
   names.remove(".DS_Store");
   Collections.shuffle(names);
@@ -418,13 +422,21 @@ void setup_list2(int cond_num){
   }  
 }
 
-// This function puts up a blank screen for a specified duration
-void blank_screen(int dur){
-  background(0);
-  delay(dur);
-  
+void shuffleArray(int[] array)
+{
+    int index;
+    Random random = new Random();
+    for (int i = array.length - 1; i > 0; i--)
+    {
+        index = random.nextInt(i + 1);
+        if (index != i)
+        {
+            array[index] ^= array[i];
+            array[i] ^= array[index];
+            array[index] ^= array[i];
+        }
+    }
 }
-
 
 //----------------KEYS---------------------------------
 void keyReleased() {
