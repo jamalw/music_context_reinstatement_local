@@ -25,6 +25,7 @@ RFont font;
 Table word_table;
 Table song_table;
 int[] conditions = {0,1,2,3,0,1,2,3,0,1,2,3};
+String[] conditions_list = {"0,1,2,3,0,1,2,3,0,1,2,3"};
 String[] subj_id = {"pilot_2"};
 String[] datadir = {"/Users/jamalw/Desktop/PNI/music_context_reinstatement/"};
 boolean displayinstructioncommand = true;
@@ -447,6 +448,7 @@ void keyReleased() {
     textSize(40);   
           
     log.println(millis() + "     begin_exp   : " + subj_id[0]);
+    log.println(millis() + "     conditions  : " + conditions_list[0]);
     log.println(millis() + "     starting_run: " + run);
     log.println(millis() + "     playing_song: 0 - " + songs[0]);    
     log.println(millis() + "     starting_list: 1");    
