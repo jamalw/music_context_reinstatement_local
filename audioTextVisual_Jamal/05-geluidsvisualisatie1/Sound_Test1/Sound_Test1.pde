@@ -12,7 +12,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 PImage fade;
 FFT fft;
-AudioPlayer[] player = new AudioPlayer[2];
+AudioPlayer[] player = new AudioPlayer[21];
 Minim mySound; //CREATE A NEW SOUND OBJECT
 
 // for recording
@@ -25,7 +25,7 @@ RFont font;
 Table word_table;
 Table song_table;
 int[] conditions = {0,1,2,3,0,1,2,3,0,1,2,3};
-String[] subj_id = {"test_subj"};
+String[] subj_id = {"pilot_2"};
 String[] datadir = {"/Users/jamalw/Desktop/PNI/music_context_reinstatement/"};
 boolean displayinstructioncommand = true;
 boolean display_end_of_list = false;
@@ -110,6 +110,7 @@ void draw() {
   colorMode(RGB);
   noFill();
   translate(width/2, height/1.75);
+  noCursor();
   
   // Go into instruction mode
   if (displayinstructioncommand) {
@@ -125,7 +126,8 @@ void draw() {
       frameCounter = frameCounter +1;
       text("This concludes the study",0,-100);   
       if (frameCounter == rate*3){
-        log.println(second() + "     event: End of Study");
+        log.println(millis() + "     event: End of Study");        
+        log.close();
         exit();
       }      
     }
@@ -161,16 +163,16 @@ void draw() {
       recorder[conds_counter].beginRecord();  
       play_song(conditions[conds_counter]); 
       if (frameCounter == rate*10){
-        log.println(second() + "     event: Start Recording");
+        log.println(millis() + "     event: Start Recording");
       }            
     }
     else if (frameCounter == rate*70) {    
       // End Recording
       recorder[conds_counter].endRecord();
-      log.println(second() + "     event: End Recording");
+      log.println(millis() + "     event: End Recording");
       pause_song(conditions[conds_counter]);     
       recorder[conds_counter].save();      
-      log.println(second() + "     event: Save Recording");
+      log.println(millis() + "     event: Save Recording");
       if (conds_counter == conditions.length - 1){
         display_end_of_study = true; 
         frameCounter = 0;
@@ -190,8 +192,8 @@ void draw() {
       counter = 0;
       allwords_counter = 0;
       frameCounter = 0;
-      run = run + 1;
-      log.println(second() + "     starting_run: " + run);
+      run = run + 1;      
+      log.println(millis() + "     starting_run: " + run);
       list_num = 0;     
       words = loadStrings(datadir[0] + "data/" + subj_id[0] + "/stimuli/word_lists/" + str(run) + "_" + str(list_num) +".csv");
       
@@ -204,14 +206,11 @@ void draw() {
       
       conds_counter = conds_counter + 1;
       player[song_idx].play();
-      log.println(second() + "     playing_song: "+ song_idx + " - " + songs[song_idx]);
-      log.println(second() + "     starting_list: 1");
+      log.println(millis() + "     playing_song: "+ song_idx + " - " + songs[song_idx]);
+      log.println(millis() + "     starting_list: 1");
       log.flush();
       
-    }
-    else if (frameCounter == rate*74 && run == 12 && allwords_counter == 74 ){
-      display_end_of_study = true;      
-    }
+    }    
   } else {
     float soundLevel = player[song_idx].mix.level(); //GET OUR AUDIO IN LEVEL
     
@@ -263,7 +262,7 @@ void draw() {
     // If x seconds (framerate * x) has passed then progress to the next word
     else if (frameCounter == rate*6)
     {       
-      log.println(second() + "     present_word: " + text);      
+      log.println(millis() + "     present_word: " + text);      
       counter = counter + 1;            
       allwords_counter = allwords_counter + 1;
       frameCounter = 0;      
@@ -334,7 +333,7 @@ void create_word_lists (String datadir, String subj_id) {
 
 void create_song_list (String datadir, String subj_id) {
   song_table = new Table();
-  File f = new File(datadir + "stimuli/temp_songs/");
+  File f = new File(datadir + "stimuli/songs/");
   ArrayList<String> names = new ArrayList<String>(Arrays.asList(f.list()));
   names.remove(".DS_Store");
   Collections.shuffle(names);
@@ -375,17 +374,17 @@ void play_song (int cond_num) {
   if (cond_num == 0){        
     player[song_idx - 1].play();
     if (frameCounter == log_playtime){
-      log.println(second() + "     playing_song: "+ song_idx + " - " + songs[song_idx - 1]);
+      log.println(millis() + "     playing_song: "+ song_idx + " - " + songs[song_idx - 1]);
     }
   } else if (cond_num == 1 || cond_num == 3){        
     player[song_idx].play();            
     if (frameCounter == log_playtime){
-      log.println(second() + "     playing_song: "+ song_idx + " - " + songs[song_idx]);
+      log.println(millis() + "     playing_song: "+ song_idx + " - " + songs[song_idx]);
     }
   } else if (cond_num == 2) { 
     player[song_idx + 1].play();
     if (frameCounter == log_playtime){
-      log.println(second() + "     playing_song: "+ song_idx + " - " + songs[song_idx + 1]);
+      log.println(millis() + "     playing_song: "+ song_idx + " - " + songs[song_idx + 1]);
     }
   }      
 }
@@ -416,8 +415,8 @@ void setup_list2(int cond_num){
       player[song_idx].rewind();
       player[song_idx].play();
     }
-    log.println(second() + "     playing_song: "+ song_idx + " - " + songs[song_idx]);
-    log.println(second() + "     starting_list: 2");
+    log.println(millis() + "     playing_song: "+ song_idx + " - " + songs[song_idx]);
+    log.println(millis() + "     starting_list: 2");
     
   }  
 }
@@ -447,10 +446,10 @@ void keyReleased() {
     textAlign(CENTER,CENTER);
     textSize(40);   
           
-    log.println(second() + "     begin_exp   : " + subj_id[0]);
-    log.println(second() + "     starting_run: " + run);
-    log.println(second() + "     playing_song: 0 - " + songs[0]);    
-    log.println(second() + "     starting_list: 1");    
+    log.println(millis() + "     begin_exp   : " + subj_id[0]);
+    log.println(millis() + "     starting_run: " + run);
+    log.println(millis() + "     playing_song: 0 - " + songs[0]);    
+    log.println(millis() + "     starting_list: 1");    
     }
     else {
     if (key == 'f') 
